@@ -20,6 +20,9 @@
     "dev": "next dev -p 30141",
     "build": "next build --webpack",
     "start": "next start -p 30141",
+    "desktop:prep": "npm run build",
+    "desktop:dev": "tauri dev --config src-tauri/tauri.dev.conf.json",
+    "desktop:build": "tauri build --config src-tauri/tauri.bundle.conf.json",
     "lint": "eslint .",
     "release": "npm version patch --no-git-tag-version && npm run build && npm publish --access public"
   },
@@ -28,7 +31,7 @@
     "@earendil-works/pi-coding-agent": "^0.75.5",
     "@lobehub/icons": "^5.6.0",
     "@types/react-syntax-highlighter": "^15.5.13",
-    "next": "16.2.1",
+    "next": "^16.2.6",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-markdown": "^10.1.0",
@@ -37,6 +40,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.2.2",
+    "@tauri-apps/cli": "^2.0.0",
     "@types/node": "^25",
     "@types/react": "^19",
     "@types/react-dom": "^19",

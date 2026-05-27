@@ -1,0 +1,15 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "pi-web",
+  "version": "0.6.11",
+  "identifier": "works.earendil.pi-web",
+  "build": {
+    "frontendDist": "static"
+  },
+  "app": {
+    "windows": []
+  },
+  "bundle": {
+    "active": false
+  }
+}
