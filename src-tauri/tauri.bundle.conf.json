@@ -5,10 +5,7 @@
     "targets": ["nsis"],
     "resources": [
       "../bin",
-      "../.next",
-      "../public",
-      "../node_modules",
-      "../next.config.ts",
+      "../.next/standalone",
       "../package.json"
     ]
   }

@@ -1,3 +1,5 @@
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
 use std::{
     net::{SocketAddr, TcpStream},
     path::{Path, PathBuf},
@@ -5,6 +7,13 @@ use std::{
     sync::{Arc, Mutex},
     time::{Duration, Instant},
 };
+
+#[cfg(target_os = "windows")]
+use std::os::windows::process::CommandExt;
+
+/// Prevents the child process from opening a console window on Windows.
+#[cfg(target_os = "windows")]
+const CREATE_NO_WINDOW: u32 = 0x0800_0000;
 
 use tauri::{async_runtime::spawn, webview::WebviewWindowBuilder, AppHandle, Manager, RunEvent, WebviewUrl};
 
@@ -21,7 +30,20 @@ impl ServerProcess {
 
     fn kill(&self) {
         if let Some(mut child) = self.0.lock().expect("server process lock poisoned").take() {
-            let _ = child.kill();
+            #[cfg(target_os = "windows")]
+            {
+                // taskkill /T kills the entire tree (pi-web-desktop.js → server.js).
+                // Must run BEFORE child.wait(); after wait() the PID is invalid.
+                let pid = child.id();
+                let _ = Command::new("taskkill")
+                    .args(["/T", "/F", "/PID", &pid.to_string()])
+                    .creation_flags(CREATE_NO_WINDOW)
+                    .output();
+            }
+            #[cfg(not(target_os = "windows"))]
+            {
+                let _ = child.kill();
+            }
             let _ = child.wait();
         }
     }
@@ -66,17 +88,22 @@ fn spawn_server(root: &Path, port: u16) -> Result<Child, String> {
     }
 
     let node = resolve_node_command();
-    Command::new(node)
-        .arg(script)
+    let mut cmd = Command::new(node);
+    cmd.arg(script)
         .arg("--port")
         .arg(port.to_string())
         .arg("--hostname")
         .arg("127.0.0.1")
         .current_dir(root)
         .stdin(Stdio::null())
-        .stdout(Stdio::inherit())
-        .stderr(Stdio::inherit())
-        .spawn()
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
+
+    // Prevent the child node process from spawning a visible console window.
+    #[cfg(target_os = "windows")]
+    cmd.creation_flags(CREATE_NO_WINDOW);
+
+    cmd.spawn()
         .map_err(|err| format!("Failed to start pi-web desktop server: {err}"))
 }
 
