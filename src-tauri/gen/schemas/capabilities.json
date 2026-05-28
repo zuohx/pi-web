@@ -1,1 +1,1 @@
-{}
+{"default":{"identifier":"default","description":"Capability for the main desktop window and local pi-web origin.","remote":{"urls":["http://127.0.0.1:30141/*"]},"local":true,"windows":["main"],"permissions":["core:default","opener:default"]}}

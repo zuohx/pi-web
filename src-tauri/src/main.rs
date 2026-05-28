@@ -137,6 +137,7 @@ fn create_window(app: &AppHandle, url: &str) -> tauri::Result<()> {
 
 fn main() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             let app_handle = app.handle().clone();
             let server = ServerProcess::new();
