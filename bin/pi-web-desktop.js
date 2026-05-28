@@ -2,8 +2,10 @@
 "use strict";
 
 // Tauri desktop launcher for pi-web.
-// Keeps the existing production server startup behavior, but never opens
-// the system browser. Intended to be spawned by Tauri in the background.
+// Supports two modes:
+//   1. Standalone (preferred) — runs .next/standalone/server.js directly
+//   2. Legacy fallback — runs `next start`
+// Never opens the system browser. Intended to be spawned by Tauri.
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { spawn } = require("child_process");
@@ -16,18 +18,8 @@ const { parseArgs } = require("util");
 
 const pkgDir = path.join(__dirname, "..");
 const nextDir = path.join(pkgDir, ".next");
-
-let nextBin;
-try {
-  nextBin = require.resolve("next/dist/bin/next", { paths: [pkgDir] });
-} catch {
-  try {
-    const nextPkg = require.resolve("next/package.json", { paths: [pkgDir] });
-    nextBin = path.join(path.dirname(nextPkg), "dist", "bin", "next");
-  } catch {
-    nextBin = path.join(pkgDir, "node_modules", "next", "dist", "bin", "next");
-  }
-}
+const standaloneDir = path.join(nextDir, "standalone");
+const standaloneServer = path.join(standaloneDir, "server.js");
 
 const { values: cliArgs } = parseArgs({
   options: {
@@ -45,13 +37,53 @@ if (!fs.existsSync(nextDir)) {
   process.exit(1);
 }
 
-const nextArgs = ["start", "-p", port, "-H", hostname];
+// --- Choose launch mode ---
+const useStandalone = fs.existsSync(standaloneServer);
 
-const child = spawn(process.execPath, [nextBin, ...nextArgs], {
-  cwd: pkgDir,
-  stdio: "inherit",
-  env: { ...process.env, PI_WEB_DESKTOP: "1" },
-});
+let child;
+
+if (useStandalone) {
+  // Standalone mode: run server.js directly with required env vars.
+  // The standalone server expects PORT and HOSTNAME env vars.
+  console.log(`[pi-web] Starting standalone server on ${hostname}:${port}`);
+  const env = {
+    ...process.env,
+    PORT: port,
+    HOSTNAME: hostname,
+    NODE_ENV: process.env.NODE_ENV ?? "production",
+    PI_WEB_DESKTOP: "1",
+  };
+
+  child = spawn(process.execPath, [standaloneServer], {
+    cwd: standaloneDir,
+    stdio: "inherit",
+    env,
+    windowsHide: true,
+  });
+} else {
+  // Legacy fallback: use `next start`.
+  console.log(`[pi-web] Standalone not found, falling back to next start on ${hostname}:${port}`);
+  let nextBin;
+  try {
+    nextBin = require.resolve("next/dist/bin/next", { paths: [pkgDir] });
+  } catch {
+    try {
+      const nextPkg = require.resolve("next/package.json", { paths: [pkgDir] });
+      nextBin = path.join(path.dirname(nextPkg), "dist", "bin", "next");
+    } catch {
+      nextBin = path.join(pkgDir, "node_modules", "next", "dist", "bin", "next");
+    }
+  }
+
+  const nextArgs = ["start", "-p", port, "-H", hostname];
+
+  child = spawn(process.execPath, [nextBin, ...nextArgs], {
+    cwd: pkgDir,
+    stdio: "inherit",
+    env: { ...process.env, PI_WEB_DESKTOP: "1" },
+    windowsHide: true,
+  });
+}
 
 const forwardSignal = (signal) => {
   if (!child.killed) {
