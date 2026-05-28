@@ -20,9 +20,9 @@
     "dev": "next dev -p 30141",
     "build": "next build --webpack",
     "start": "next start -p 30141",
-    "desktop:prep": "npm run build",
+    "desktop:prep": "next build --webpack && node bin/prepare-standalone-desktop.js",
     "desktop:dev": "tauri dev --config src-tauri/tauri.dev.conf.json",
-    "desktop:build": "tauri build --config src-tauri/tauri.bundle.conf.json",
+    "desktop:build": "npm run desktop:prep && tauri build --config src-tauri/tauri.bundle.conf.json",
     "lint": "eslint .",
     "release": "npm version patch --no-git-tag-version && npm run build && npm publish --access public"
   },
