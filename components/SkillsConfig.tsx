@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { handleExternalLinkClick } from "@/lib/external-links";
 import type { SkillSearchResult } from "@/app/api/skills/search/route";
 
 interface Skill {
@@ -437,6 +438,9 @@ function AddSkillPanel({
                         href={r.url}
                         target="_blank"
                         rel="noreferrer"
+                        onClick={(e) => {
+                          void handleExternalLinkClick(e, r.url);
+                        }}
                         style={{
                           fontSize: 12,
                           color: "var(--accent)",
@@ -494,6 +498,9 @@ function AddSkillPanel({
               href="https://skills.sh"
               target="_blank"
               rel="noreferrer"
+              onClick={(e) => {
+                void handleExternalLinkClick(e, "https://skills.sh");
+              }}
               style={{ color: "var(--accent)", textDecoration: "none" }}
             >
               skills.sh

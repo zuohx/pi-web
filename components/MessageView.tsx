@@ -7,6 +7,7 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vs } from "react-syntax-highlighter/dist/cjs/styles/prism";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/cjs/styles/prism";
 import { useTheme } from "@/hooks/useTheme";
+import { handleExternalLinkClick } from "@/lib/external-links";
 import type {
   AgentMessage,
   UserMessage,
@@ -552,6 +553,21 @@ function TextBlock({ block }: { block: TextContent }) {
           pre({ children }) {
             // Unwrap <pre> wrapper — CodeBlock handles its own container
             return <>{children}</>;
+          },
+          a({ href, children, ...props }) {
+            return (
+              <a
+                {...props}
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => {
+                  void handleExternalLinkClick(e, href);
+                }}
+              >
+                {children}
+              </a>
+            );
           },
         }}
       >
